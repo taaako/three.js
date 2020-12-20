@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>はじめてのthree.js</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+  color: #aaa;
+  font-family:Monospace;
+  font-size:13px;
+  text-align:center;
+  font-weight: bold;
+ 
+  background-color: #444;
+  margin: 0px;
+  overflow: hidden;
+}
+ 
+#info {
+  color:#ccc;
+  position: absolute;
+  top: 0px; width: 100%;
+  padding: 0px;
+}
+ 
+a {
+  color: red;
+}
+</style>
+</head>
+ 
+<body>
+<div id="container"></div>
+<div id="info">
+  <a href="http://threejs.org" target="_blank">three.js</a>へようこそ</br>
+  左ボタンのドラッグ：回転、右ボタンのドラッグ：平行移動、ホイール：ズーム、
+</div>
+ 
+<!-- 以下のライブラリの配置はそのままで構わない -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.js"></script>
+<script src="TrackballControls.js"></script>
+<script>
+ 
+// Three.js revision 85 is used.
+ 
+/* global THREE */
+ 
+(function() {
+  "use strict";
+  
+  var container;
+  var camera, controls, light, scene, renderer;
+  var mesh,mesh1,angle;
+  var cylinder;
+  var sprite,sprite1,material1,material2,material3;
+  var plane;
+
+ 
+  var ichigooden,futa,kuma,wall,kira,kusa,door,kabe,uzu,obake;
+  var loader = new THREE.TextureLoader();
+
+ 
+  loader.load('images/sn_001.jpg', function (x) {
+    ichigooden = x;
+    loader.load('images/futa.png', function (y) {
+    futa = y;
+    loader.load('images/wall.jpg', function (x1) {
+    wall = x1;
+    loader.load('images/kira.png', function (y1) {
+    kira = y1;
+    loader.load('images/kusa.jpg', function (z1) {
+    kusa = z1;
+    loader.load('images/door.png', function (x2) {
+    door = x2;
+    loader.load('images/uzu.png', function (z2) {
+    uzu = z2;
+    loader.load('images/obake.png', function (x3) {
+    obake = x3;
+    init();
+    animate();
+  });});});});});});});});
+  
+ 
+  function init() {
+ 
+    // (1) シーンの作成 （変更しない）
+    scene = new THREE.Scene();
+ 
+    // (2) カメラの作成 （変更しない）
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.x = 100;
+    camera.position.y = 500;
+    camera.position.z = 1000;
+ 
+    // カメラをトラックボールで動かす （変更しない）
+    controls = new THREE.TrackballControls(camera);
+    controls.addEventListener('change', render);
+ 
+    // (4) ライティング　平行光線＋環境光（変更しない）
+    light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(300, 200, 100);
+    light.castShadow = true;
+    light.shadow.camera.top = 1024;
+    light.shadow.camera.bottom = -1024;
+    light.shadow.camera.left = -1024;
+    light.shadow.camera.right = 1024;
+    light.shadow.camera.near = 0;
+    light.shadow.camera.far = 1024;
+    scene.add(light);
+ 
+    light = new THREE.AmbientLight(0xaaaaaa);
+    scene.add(light);
+ 
+ 
+    // (5)表示する物体の作成
+    var geometry, material; 
+ 
+
+
+
+   //start
+   geometry = new THREE.BoxGeometry(5, 40, 20);
+    material = new THREE.MeshLambertMaterial({
+      map: door
+    });
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.x = 0;
+    mesh.position.y = 20;
+    mesh.position.z = 500;
+    mesh.rotation.y = -Math.PI/2;
+    mesh.receiveShadow = true;
+    mesh.castShadow = true;
+    scene.add(mesh);
+
+    //いちごおでん(円柱)  参考http://mamewotoko.blogspot.com/2015/10/3d-threejs.html  and  https://ics.media/tutorial-three/geometry_general/
+    geometry = new THREE.CylinderGeometry( 5, 5, 10, 32 );
+    var side_material = new THREE.MeshPhongMaterial( {map: ichigooden} );
+    var end_material = new THREE.MeshPhongMaterial({ map: futa });
+    material = new THREE.MeshFaceMaterial([side_material, end_material]);
+    cylinder = new THREE.Mesh( geometry, material );
+    //後ろ radialSegments*2個は end_material
+    //それ以外は side_material
+    for(var i = 0; i < geometry.faces.length-geometry.parameters.radialSegments*2; i++){
+    geometry.faces[i].materialIndex = 0;
+    }
+    for(var i = geometry.faces.length-geometry.parameters.radialSegments*2; i < geometry.faces.length; i++){
+    geometry.faces[i].materialIndex = 1;
+    }
+    cylinder.position.z = 300;
+    cylinder.position.y = 5;
+    cylinder.receiveShadow = true;
+    cylinder.castShadow = true;
+    cylinder.rotation.y = -Math.PI/1;
+    scene.add( cylinder );
+
+    //キラキラ
+    material1 = new THREE.SpriteMaterial({
+    color: 0xAEFFFB,
+    map: kira,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+    });
+    material1.fog = true;
+    for (let i = 0; i < 50; i++) {
+    sprite = new THREE.Sprite(material1);
+    sprite.position.x = 2000 * (Math.random() - 0.5);
+    sprite.position.y = 1000 * Math.random() - 40;
+    sprite.position.z = 2000 * (Math.random() - 0.5);
+    sprite.scale.set(20, 20, 20);
+    scene.add(sprite);
+    }
+
+    //キラキラ2
+    material2 = new THREE.SpriteMaterial({
+    color: 0xAEFFFB,
+    map: kira,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+    });
+    material2.fog = true;
+    for (let i = 0; i < 50; i++) {
+    sprite = new THREE.Sprite(material2);
+    sprite.position.x = 2000 * (Math.random() - 0.5);
+    sprite.position.y = -500+2000 * Math.random() - 40;
+    sprite.position.z = 1000 * (Math.random() - 0.5);
+    sprite.scale.set(30, 30, 30);
+    scene.add(sprite);
+    }
+ 
+/*
+  geometry = new THREE.PlaneGeometry( 1000, 1000, 32 );
+  material = new THREE.MeshToonMaterial({map: kabe,color: 0x555555});
+  var plane = new THREE.Mesh( geometry, material );
+  plane.position.z = -500;
+  scene.add( plane );
+
+  geometry = new THREE.PlaneGeometry( 1000, 1000, 32 );
+  material = new THREE.MeshToonMaterial({map: kabe,color: 0x555555});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.z = +500;
+  scene.add( plane );
+
+  geometry = new THREE.PlaneGeometry( 1000, 1000, 32 );
+  material = new THREE.MeshToonMaterial({map: kabe,color: 0x555555});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.x = +50;
+  plane.rotation.y = -Math.PI/2;
+  scene.add( plane );
+
+  geometry = new THREE.PlaneGeometry( 1000, 1000, 32 );
+  material = new THREE.MeshToonMaterial({map: kabe,color: 0x555555});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.x = -500;
+  plane.rotation.y = -Math.PI/2;
+  scene.add( plane );
+*/
+
+  //道
+  geometry = new THREE.PlaneGeometry( 20, 500, 32 );
+  material = new THREE.MeshStandardMaterial({color: 0x555555, roughness:0.5});
+　plane = new THREE.Mesh( geometry, material );
+  plane.rotation.x = -Math.PI/2;
+  plane.position.z = 250;
+  scene.add( plane );  
+
+  geometry = new THREE.PlaneGeometry( 500, 20, 32 );
+  material = new THREE.MeshStandardMaterial({color: 0x555555, roughness:0.5});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.z = 0;
+  plane.rotation.x = -Math.PI/2;
+  scene.add( plane );
+
+//右負けルート
+  geometry = new THREE.PlaneGeometry( 10, 20, 32 );
+  material = new THREE.MeshStandardMaterial({color: 0x555555, roughness:0.5});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.x = 250;
+  plane.position.y = -10;
+  plane.rotation.x = -Math.PI/2;
+  scene.add( plane );
+
+  geometry = new THREE.PlaneGeometry( 10, 20, 32 );
+  material = new THREE.MeshStandardMaterial({color: 0x555555, roughness:0.5});
+　plane = new THREE.Mesh( geometry, material );
+  plane.position.x = 260;
+  plane.position.y = -20;
+  plane.rotation.x = -Math.PI/2;
+  scene.add( plane );
+
+
+//左勝ちワープルート
+    geometry = new THREE.TorusGeometry(12, 3, 2, 100);
+    material = new THREE.MeshBasicMaterial({
+    color: 0xFCFF6C,
+    map: uzu,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    side: THREE.FrontSide
+});
+    mesh1 = new THREE.Mesh( geometry, material );
+    mesh1.rotation.x = 90 * Math.PI / 180;
+    mesh1.position.y = 1;
+    mesh1.position.x = -240;
+    scene.add(mesh1);
+
+    //敵
+    material3 = new THREE.SpriteMaterial({
+    map: obake,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+    });
+    material3.fog = true;
+    for (let i = 0; i < 50; i++) {
+    sprite1 = new THREE.Sprite(material3);
+    sprite1.position.x = 1000 * (Math.random() - 0.5);
+    sprite1.position.y = -485;
+    sprite1.position.z = 1000 * (Math.random() - 0.5);
+    sprite1.scale.set(30, 30, 30);
+    scene.add(sprite1);
+    }
+
+
+
+    //地面（PlaneGeometry）の生成
+    var mesh =  new THREE.Mesh(
+                      new THREE.PlaneGeometry(1000, 1000, 1, 1),
+                      new THREE.MeshLambertMaterial({
+                          side: THREE.DoubleSide,
+                          color: 0x555555,
+                          map: kusa
+                      })
+                  );                      
+    // 影の有効化          
+    mesh.receiveShadow = true;
+    mesh.rotation.x = -Math.PI/2;
+    mesh.position.y = -500;
+    // シーンオブジェクトに追加 
+    scene.add(mesh);              
+ 
+    var axisHelper = new THREE.AxisHelper(1000); 
+    scene.add(axisHelper);
+ 
+    // scene.fog = new THREE.FogExp2( 0xcccccc, 0.001 );
+ 
+    // (6)レンダリング （変更しない）
+    renderer = new THREE.WebGLRenderer( { antialias: false } );
+ 
+    //影の有効化（レンダラー）
+    renderer.shadowMap.enabled = true;
+ 
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor("#222222", 1 );
+ 
+    container = document.getElementById( 'container' );
+    container.appendChild( renderer.domElement );
+ 
+    window.addEventListener( 'resize', onWindowResize, false );
+  }
+ 
+  // ウインドウサイズを変えたときのアクション（変更しない）
+  function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      controls.handleResize();
+      render();
+  }
+ 
+  // アニメーションの実行（無限ループ）
+  function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+   for(let i=0; i<10; i++){
+        material1.opacity -= 0.0001;
+     if(material1.opacity < 0){
+        material1.opacity += 1;
+    }}
+    for(let i=0; i<25; i++){
+        material2.opacity -= 0.0001;
+     if(material2.opacity < 0){
+        material2.opacity += 1;
+    }}
+
+    for(let i=0; i<5; i++){
+        material3.opacity -= 0.001;
+        
+     if(material3.opacity < 0){
+        material3.opacity += 1;
+    }}
+    sprite1.position.y += 0.1;
+
+
+    mesh1.rotation.z += 0.1;
+      render();
+  }
+  function render() {
+      renderer.render(scene, camera);
+  }
+ 
+})();
+ 
+</script>
+</body>
+</html>
